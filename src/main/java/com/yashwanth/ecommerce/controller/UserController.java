@@ -1,123 +1,90 @@
 package com.yashwanth.ecommerce.controller;
 
+import com.yashwanth.ecommerce.entity.Order;
 import com.yashwanth.ecommerce.entity.User;
+import com.yashwanth.ecommerce.repository.OrderRepository;
 import com.yashwanth.ecommerce.repository.UserRepository;
-import com.yashwanth.ecommerce.util.JwtUtil;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
 
 @RestController
 @RequestMapping("/users")
 @CrossOrigin
 public class UserController {
 
-
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtUtil jwtUtil;
+    private final OrderRepository orderRepository;
 
-
-    public UserController(UserRepository userRepository,
-                          PasswordEncoder passwordEncoder,
-                          JwtUtil jwtUtil) {
-
+    public UserController(
+            UserRepository userRepository,
+            OrderRepository orderRepository
+    ) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
+        this.orderRepository = orderRepository;
     }
 
-
-
-    // Register User
-    @PostMapping
-    public User addUser(@RequestBody User user) {
-
-        user.setPassword(
-                passwordEncoder.encode(user.getPassword())
-        );
-
-        return userRepository.save(user);
-    }
-
-
-
-    // Login User
-    @PostMapping("/login")
-    public Map<String, String> login(@RequestBody User loginUser) {
-
-
-        Optional<User> user =
-                userRepository.findByEmail(loginUser.getEmail());
-
-
-        Map<String, String> response = new HashMap<>();
-
-
-        if (user.isPresent()
-                && passwordEncoder.matches(
-                loginUser.getPassword(),
-                user.get().getPassword())) {
-
-
-            String token =
-                    jwtUtil.generateToken(
-                            user.get().getEmail()
-                    );
-
-
-            response.put("message", "Login Successful");
-            response.put("token", token);
-
-
-        } else {
-
-            response.put("message",
-                    "Invalid Email or Password");
-        }
-
-
-        return response;
-    }
-
-
-
-
-    // Get All Users
+    // =========================
+    // GET ALL USERS
+    // =========================
     @GetMapping
-    public List<User> getUsers() {
+    public ResponseEntity<List<User>> getUsers() {
 
-        return userRepository.findAll();
+        return ResponseEntity.ok(
+                userRepository.findAll()
+        );
     }
 
-
-
-
-    // Get User By Id
+    // =========================
+    // GET USER BY ID
+    // =========================
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Long id) {
+    public ResponseEntity<User> getUser(
+            @PathVariable Long id
+    ) {
 
         return userRepository.findById(id)
-                .orElse(null);
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
-
-
-
-
-    // Delete User
+    // =========================
+    // DELETE USER
+    // =========================
     @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable Long id) {
+    public ResponseEntity<String> deleteUser(
+            @PathVariable Long id
+    ) {
 
-        userRepository.deleteById(id);
+        // Check whether user exists
+        User user = userRepository.findById(id)
+                .orElse(null);
 
-        return "User deleted successfully";
+        if (user == null) {
+
+            return ResponseEntity
+                    .notFound()
+                    .build();
+        }
+
+        // Check whether user has existing orders
+        List<Order> orders = orderRepository.findByUser(user);
+
+        if (!orders.isEmpty()) {
+
+            return ResponseEntity
+                    .status(409)
+                    .body(
+                            "User cannot be deleted because the user has existing orders."
+                    );
+        }
+
+        // Delete user if there are no orders
+        userRepository.delete(user);
+
+        return ResponseEntity.ok(
+                "User deleted successfully"
+        );
     }
-
 }

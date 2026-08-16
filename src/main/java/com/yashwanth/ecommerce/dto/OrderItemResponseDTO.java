@@ -7,7 +7,6 @@ public class OrderItemResponseDTO {
     private Integer quantity;
     private Double price;
 
-
     public OrderItemResponseDTO(
             Long productId,
             String productName,
@@ -20,21 +19,17 @@ public class OrderItemResponseDTO {
         this.price = price;
     }
 
-
     public Long getProductId() {
         return productId;
     }
-
 
     public String getProductName() {
         return productName;
     }
 
-
     public Integer getQuantity() {
         return quantity;
     }
-
 
     public Double getPrice() {
         return price;

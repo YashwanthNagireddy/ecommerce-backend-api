@@ -1,6 +1,7 @@
 package com.yashwanth.ecommerce.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 import java.util.List;
@@ -13,20 +14,25 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false)
     private String name;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
+    private String role;
 
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     private List<Cart> carts;
 
-
     public User() {
     }
-
 
     public Long getId() {
         return id;
@@ -36,7 +42,6 @@ public class User {
         this.id = id;
     }
 
-
     public String getEmail() {
         return email;
     }
@@ -44,7 +49,6 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
-
 
     public String getName() {
         return name;
@@ -54,7 +58,6 @@ public class User {
         this.name = name;
     }
 
-
     public String getPassword() {
         return password;
     }
@@ -63,6 +66,13 @@ public class User {
         this.password = password;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
 
     public List<Cart> getCarts() {
         return carts;

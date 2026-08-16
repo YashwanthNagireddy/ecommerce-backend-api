@@ -2,40 +2,57 @@ package com.yashwanth.ecommerce.service;
 
 import com.yashwanth.ecommerce.entity.User;
 import com.yashwanth.ecommerce.repository.UserRepository;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
-
     private final UserRepository userRepository;
 
-
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public CustomUserDetailsService(
+            UserRepository userRepository
+    ) {
         this.userRepository = userRepository;
     }
-
 
     @Override
     public UserDetails loadUserByUsername(String email)
             throws UsernameNotFoundException {
 
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
-                        new UsernameNotFoundException("User not found")
+                        new UsernameNotFoundException(
+                                "User not found: " + email
+                        )
                 );
 
+        String role = user.getRole();
 
-        return org.springframework.security.core.userdetails.User
-                .builder()
-                .username(user.getEmail())
-                .password(user.getPassword())
-                .roles("USER")
-                .build();
+        if (role == null || role.isBlank()) {
+            throw new UsernameNotFoundException(
+                    "User has no role: " + email
+            );
+        }
+
+        // Convert database role:
+        // ADMIN -> ROLE_ADMIN
+        // USER  -> ROLE_USER
+        String authority = role.startsWith("ROLE_")
+                ? role
+                : "ROLE_" + role;
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getEmail(),
+                user.getPassword(),
+                Collections.singletonList(
+                        new SimpleGrantedAuthority(authority)
+                )
+        );
     }
 }

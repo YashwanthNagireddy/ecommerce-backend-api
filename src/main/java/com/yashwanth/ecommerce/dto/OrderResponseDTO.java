@@ -9,7 +9,6 @@ public class OrderResponseDTO {
     private Double totalAmount;
     private List<OrderItemResponseDTO> items;
 
-
     public OrderResponseDTO(
             Long id,
             String status,
@@ -22,21 +21,17 @@ public class OrderResponseDTO {
         this.items = items;
     }
 
-
     public Long getId() {
         return id;
     }
-
 
     public String getStatus() {
         return status;
     }
 
-
     public Double getTotalAmount() {
         return totalAmount;
     }
-
 
     public List<OrderItemResponseDTO> getItems() {
         return items;
